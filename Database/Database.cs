@@ -21,9 +21,14 @@ internal sealed class Database
             Mode = SqliteOpenMode.ReadWriteCreate
         }.ToString();
 
+        
+        
+    }
+
+    internal void InitializeDb()
+    {
         Directory.CreateDirectory(Path.GetDirectoryName(_dbPath)!);
         InitializeSchema();
-        
     }
 
     internal SqliteConnection OpenConnection()
@@ -40,7 +45,7 @@ internal sealed class Database
         return conn;
     }
 
-    internal void InitializeSchema()
+    private void InitializeSchema()
     {
         using var connection = this.OpenConnection();
         using var tx = connection.BeginTransaction();
@@ -56,6 +61,8 @@ internal sealed class Database
               folder_id TEXT PRIMARY KEY,
               parent_folder_id TEXT NULL,
               name TEXT NOT NULL,
+              owner_id INTEGER NOT NULL,
+              tenant_id INTEGER NOT NULL,
               FOREIGN KEY(parent_folder_id) REFERENCES folders(folder_id)
             );
 
@@ -63,6 +70,7 @@ internal sealed class Database
               document_id TEXT PRIMARY KEY,
               folder_id TEXT NOT NULL,
               name TEXT NOT NULL,
+              owner_id INTEGER NOT NULL,
               mime_type TEXT NULL,
               is_deleted INTEGER NOT NULL DEFAULT 0,
               FOREIGN KEY(folder_id) REFERENCES folders(folder_id)
@@ -79,6 +87,11 @@ internal sealed class Database
 
             CREATE INDEX IF NOT EXISTS idx_documents_folder ON documents(folder_id);
             CREATE INDEX IF NOT EXISTS idx_versions_document ON versions(document_id);
+            CREATE INDEX IF NOT EXISTS idx_folders_owner_parent ON folders(owner_id, parent_folder_id);
+            CREATE INDEX IF NOT EXISTS idx_documents_owner_folder_active ON documents(owner_id, folder_id) WHERE is_deleted = 0;
+            CREATE INDEX IF NOT EXISTS idx_versions_document_created ON versions(document_id, created_at_utc DESC);
+
+            
             ";
             
             command.ExecuteNonQuery();

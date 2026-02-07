@@ -2,6 +2,8 @@
 
 using JustDMS;
 using JustDMS.BlobStore;
+using JustDMS.Bootstrap;
+using JustDMS.Config;
 using JustDMS.Database;
 internal class Program
 {
@@ -10,17 +12,19 @@ internal class Program
     {
         string workingDir = Directory.GetCurrentDirectory();
         string blobStoreDir = Path.Combine(workingDir, "blobstore");
-        
-        var DataStore = new BlobStore(blobStoreDir);
-        var Database = new Database(workingDir);
+
+        var bootstrap = new Bootstrap();
+        var config = new AppConfig();
+        var dataStore = new BlobStore(blobStoreDir);
+        var database = new Database(workingDir);
         
         using var fs = File.OpenRead("C:\\Users\\oelar\\Pictures\\test.txt");
-        string hash = DataStore.Put(fs);
+        string hash = dataStore.Put(fs);
 
         Console.WriteLine(hash);
-        Console.WriteLine(DataStore.Exists(hash));
+        Console.WriteLine(dataStore.Exists(hash));
 
-        using var readBack = DataStore.Get(hash);
+        using var readBack = dataStore.Get(hash);
         Console.WriteLine(readBack.Length); // sollte nicht crashen
         Console.ReadLine();
         

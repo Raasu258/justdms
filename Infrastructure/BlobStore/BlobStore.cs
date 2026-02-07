@@ -12,6 +12,11 @@ internal class BlobStore
     public BlobStore(string rootDirectory)
     {
         _rootDir = rootDirectory ?? throw new ArgumentNullException(nameof(rootDirectory));
+        
+    }
+
+    internal void InitializeBlobStore()
+    {
         Directory.CreateDirectory(_rootDir);
     }
     
