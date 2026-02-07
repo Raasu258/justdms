@@ -20,10 +20,14 @@ internal class DmsStore
     {
         
     }
-
+    
     internal bool ImportFile(string fileName)
     {
         try
+        {
+
+        }
+        catch(Exception e)
         {
             
         }
@@ -31,21 +35,29 @@ internal class DmsStore
 
         return false;
     }
-    
-    internal bool ExportFile(string fileName)
+    internal bool ExportFile(string fileName, string path)
     {
         
     }
-
+    internal bool CreateFolder(string folderName)
+    {
+        
+    }
+    internal bool ExportFolder(string folderName, string path)
+    {
+        
+    }
+    internal bool DeleteFolder(string folderName)
+    {
+        
+    }
     internal bool DeleteDocument(string fileName)
     {
         
     }
-    
     internal List<T> ListDocuments()
     {
     }
-
     internal void GetOpenPath()
     {
         
