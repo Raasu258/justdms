@@ -1,0 +1,91 @@
+﻿using System.Runtime.InteropServices.ComTypes;
+
+namespace JustDMS.Database;
+
+using Microsoft.Data.Sqlite;
+
+internal sealed class Database
+{
+    private readonly string _dbPath;
+    private readonly string _connectionString;
+    
+    internal Database(string repoRootPath)
+    {
+        if (string.IsNullOrWhiteSpace(repoRootPath))
+            throw new ArgumentException("Repo root path is required.", nameof(repoRootPath));
+        
+        _dbPath = Path.Combine(repoRootPath, "Database", "justdms_db.db");
+        _connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = _dbPath,
+            Mode = SqliteOpenMode.ReadWriteCreate
+        }.ToString();
+
+        Directory.CreateDirectory(Path.GetDirectoryName(_dbPath)!);
+        InitializeSchema();
+        
+    }
+
+    internal SqliteConnection OpenConnection()
+    {
+        var conn = new SqliteConnection(_connectionString);
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+                          PRAGMA foreign_keys = ON;
+                          PRAGMA journal_mode = WAL;
+                          PRAGMA busy_timeout = 5000;
+                          """;
+        cmd.ExecuteNonQuery();
+        return conn;
+    }
+
+    internal void InitializeSchema()
+    {
+        using var connection = this.OpenConnection();
+        using var tx = connection.BeginTransaction();
+        using var command = connection.CreateCommand();
+        command.Transaction = tx;
+        
+        // to enforce foreign keys
+        command.CommandText = "PRAGMA foreign_keys = ON;";
+        command.ExecuteNonQuery();
+
+        command.CommandText = @"
+            CREATE TABLE IF NOT EXISTS folders (
+              folder_id TEXT PRIMARY KEY,
+              parent_folder_id TEXT NULL,
+              name TEXT NOT NULL,
+              FOREIGN KEY(parent_folder_id) REFERENCES folders(folder_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS documents (
+              document_id TEXT PRIMARY KEY,
+              folder_id TEXT NOT NULL,
+              name TEXT NOT NULL,
+              mime_type TEXT NULL,
+              is_deleted INTEGER NOT NULL DEFAULT 0,
+              FOREIGN KEY(folder_id) REFERENCES folders(folder_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS versions (
+              version_id TEXT PRIMARY KEY,
+              document_id TEXT NOT NULL,
+              blob_hash TEXT NOT NULL,
+              created_at_utc TEXT NOT NULL,
+              base_version_id TEXT NULL,
+              FOREIGN KEY(document_id) REFERENCES documents(document_id)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_documents_folder ON documents(folder_id);
+            CREATE INDEX IF NOT EXISTS idx_versions_document ON versions(document_id);
+            ";
+            
+            command.ExecuteNonQuery();
+            
+            tx.Commit();
+    }
+    
+    public string DbPath => _dbPath;
+    
+}
