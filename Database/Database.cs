@@ -85,6 +85,20 @@ internal sealed class Database
               FOREIGN KEY(document_id) REFERENCES documents(document_id)
             );
 
+            CREATE TABLE IF NOT EXISTS users(
+                user_id TEXT PRIMARY KEY,
+                tenant_id TEXT NOT NULL,
+                FOREIGN KEY(tenant_id) REFERENCES tenants(tenant_id)
+             );
+             
+            CREATE TABLE IF NOT EXISTS tenants(
+                tenant_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL
+            );
+
+            INSERT into tenants( name) VALUES(default);
+            INSERT into users(tenant_id) VALUES(0);
+
             CREATE INDEX IF NOT EXISTS idx_documents_folder ON documents(folder_id);
             CREATE INDEX IF NOT EXISTS idx_versions_document ON versions(document_id);
             CREATE INDEX IF NOT EXISTS idx_folders_owner_parent ON folders(owner_id, parent_folder_id);
