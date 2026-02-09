@@ -20,6 +20,7 @@ internal class BlobStore
         Directory.CreateDirectory(_rootDir);
     }
     
+    
     internal string Put(Stream content)
     {
         ArgumentNullException.ThrowIfNull(content);;

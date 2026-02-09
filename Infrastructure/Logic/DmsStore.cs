@@ -1,4 +1,6 @@
-﻿namespace JustDMS.Infrastructure.Logic;
+﻿using Microsoft.Data.Sqlite;
+
+namespace JustDMS.Infrastructure.Logic;
 
 using System.Collections.Generic;
 using Bootstrap;
@@ -18,18 +20,49 @@ internal class DmsStore
     
     internal void Initialize()
     {
-        
+        using SqliteConnection db = _database.OpenConnection();
+        using var cmd = db.CreateCommand();
+        cmd.CommandText = @"
+
+        INSERT OR IGNORE INTO folders (
+          folder_id,
+          parent_folder_id,
+          name,
+          owner_id,
+          tenant_id
+        )
+        VALUES (
+          'root',
+          NULL,
+          'Root',
+          0,
+          0
+        )";
     }
     
-    internal bool ImportFile(string fileName)
+    internal bool ImportFile(Stream content, int folderId = -1)
     {
         try
         {
+            var hash = _blobStore.Put(content);
+            using SqliteConnection db = _database.OpenConnection();
+            using var cmd = db.CreateCommand();
+            
 
+            
+
+        }
+        catch (ArgumentNullException)   // idea for future return of array with error to make a good error message in GUI
+        {
+            return false;
+        }
+        catch (ArgumentException)
+        {
+            return false;
         }
         catch(Exception e)
         {
-            
+            return false;
         }
         
 
@@ -41,7 +74,27 @@ internal class DmsStore
     }
     internal bool CreateFolder(string folderName)
     {
-        
+        using SqliteConnection db = _database.OpenConnection();
+        using var cmd = db.CreateCommand();
+
+        cmd.CommandText = @"
+        INSERT INTO folders (
+          folder_id,
+          parent_folder_id,
+          name,
+          owner_id,
+          tenant_id
+        )
+        VALUES (
+          $folderId, // offen
+          'root',
+          $fileName,
+          0,
+          0
+        );
+
+        ";
+
     }
     internal bool ExportFolder(string folderName, string path)
     {

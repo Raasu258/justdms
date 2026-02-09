@@ -63,7 +63,9 @@ internal sealed class Database
               name TEXT NOT NULL,
               owner_id INTEGER NOT NULL,
               tenant_id INTEGER NOT NULL,
-              FOREIGN KEY(parent_folder_id) REFERENCES folders(folder_id)
+              FOREIGN KEY(parent_folder_id) REFERENCES folders(folder_id),
+              FOREIGN KEY(owner_id) REFERENCES users(uid),
+              FOREIGN KEY (tenant_id) REFERENCES tenants(tenant_id)
             );
 
             CREATE TABLE IF NOT EXISTS documents (
@@ -85,19 +87,21 @@ internal sealed class Database
               FOREIGN KEY(document_id) REFERENCES documents(document_id)
             );
 
-            CREATE TABLE IF NOT EXISTS users(
-                user_id TEXT PRIMARY KEY,
-                tenant_id TEXT NOT NULL,
-                FOREIGN KEY(tenant_id) REFERENCES tenants(tenant_id)
-             );
-             
             CREATE TABLE IF NOT EXISTS tenants(
                 tenant_id TEXT PRIMARY KEY,
                 name TEXT NOT NULL
             );
 
-            INSERT into tenants( name) VALUES(default);
-            INSERT into users(tenant_id) VALUES(0);
+            CREATE TABLE IF NOT EXISTS users(
+                uid TEXT PRIMARY KEY,
+                tenant_id TEXT NOT NULL,
+                FOREIGN KEY(tenant_id) REFERENCES tenants(tenant_id)
+             );
+             
+            
+
+            INSERT OR IGNORE INTO tenants(tenant_id, name) VALUES(0, 'default');
+            INSERT OR IGNORE INTO users(uid, tenant_id) VALUES(0, 0);
 
             CREATE INDEX IF NOT EXISTS idx_documents_folder ON documents(folder_id);
             CREATE INDEX IF NOT EXISTS idx_versions_document ON versions(document_id);
