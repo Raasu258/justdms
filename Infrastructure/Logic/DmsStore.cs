@@ -40,16 +40,38 @@ internal class DmsStore
         )";
     }
     
-    internal bool ImportFile(Stream content, int folderId = -1)
+    internal bool ImportFile(Stream content, string fileName, string folderID = "root", int ownerId = 0, int tenantId = 0)
     {
         try
         {
             var hash = _blobStore.Put(content);
             using SqliteConnection db = _database.OpenConnection();
             using var cmd = db.CreateCommand();
-            
 
+            cmd.CommandText = @"
+                
+                INSERT INTO documents (
+                    document_id,
+                    folder_id,
+                    name,
+                    owner_id,
+                    filetype             
+                ) VALUES (
+                     $documentId,
+                     $folderId,
+                     $fileName,
+                     $owner_id,
+                     $tenant_id, 
+                     $fileType,   
+                )                                  
+            ";
             
+            cmd.Parameters.AddWithValue("$documentId", Guid.NewGuid().ToString("N"));
+            cmd.Parameters.AddWithValue("$folderID", folderID);
+            cmd.Parameters.AddWithValue("$fileName", fileName ?? content.Name);
+            cmd.Parameters.AddWithValue("$ownerId", ownerId);
+            cmd.Parameters.AddWithValue("$tenantId", tenantId);
+            cmd.Parameters.AddWithValue("$fileType", "test");
 
         }
         catch (ArgumentNullException)   // idea for future return of array with error to make a good error message in GUI
@@ -72,12 +94,15 @@ internal class DmsStore
     {
         
     }
-    internal bool CreateFolder(string folderName)
+    
+    internal bool CreateFolder(string folderName, string parentFolderID = "root", int ownerId = 0, int tenantId = 0)
     {
-        using SqliteConnection db = _database.OpenConnection();
-        using var cmd = db.CreateCommand();
+        try
+        {
+            using SqliteConnection db = _database.OpenConnection();
+            using var cmd = db.CreateCommand();
 
-        cmd.CommandText = @"
+            cmd.CommandText = @"
         INSERT INTO folders (
           folder_id,
           parent_folder_id,
@@ -87,34 +112,58 @@ internal class DmsStore
         )
         VALUES (
           $folderId, // offen
-          'root',
-          $fileName,
-          0,
-          0
+          $parentFolderID,
+          $folderName,
+          $ownerId,
+          $tenantId
         );
 
         ";
 
+            cmd.Parameters.AddWithValue("$folderId", Guid.NewGuid().ToString("N"));
+            cmd.Parameters.AddWithValue("$parentFolderID", parentFolderID);
+            cmd.Parameters.AddWithValue("$folderName", folderName);
+            cmd.Parameters.AddWithValue("$ownerId", ownerId);
+            cmd.Parameters.AddWithValue("$tenantId", tenantId);
+
+            cmd.ExecuteNonQuery();
+        }
+        catch (Exception e) // will add more specific exceptions in the future
+        {
+            return false;
+        }
+
     }
+    
     internal bool ExportFolder(string folderName, string path)
     {
         
     }
+    
     internal bool DeleteFolder(string folderName)
     {
         
     }
+    
     internal bool DeleteDocument(string fileName)
     {
         
     }
-    internal List<T> ListDocuments()
+    
+    internal void ListDocuments()
     {
+        using SqliteConnection db = _database.OpenConnection();
+        using var cmd = db.CreateCommand();
+
+        cmd.CommandText = @"";
     }
+    
     internal void GetOpenPath()
     {
         
     }
+    
+    
     
     
     

@@ -57,6 +57,18 @@ internal sealed class Database
         command.ExecuteNonQuery();
 
         command.CommandText = @"
+
+            CREATE TABLE IF NOT EXISTS tenants(
+                tenant_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS users(
+                uid TEXT PRIMARY KEY,
+                tenant_id TEXT NOT NULL,
+                FOREIGN KEY(tenant_id) REFERENCES tenants(tenant_id)
+             );
+
             CREATE TABLE IF NOT EXISTS folders (
               folder_id TEXT PRIMARY KEY,
               parent_folder_id TEXT NULL,
@@ -73,9 +85,12 @@ internal sealed class Database
               folder_id TEXT NOT NULL,
               name TEXT NOT NULL,
               owner_id INTEGER NOT NULL,
-              mime_type TEXT NULL,
+              tenant_id INTEGER NOT NULL,
+              filetype TEXT NULL,
               is_deleted INTEGER NOT NULL DEFAULT 0,
               FOREIGN KEY(folder_id) REFERENCES folders(folder_id)
+              FOREIGN KEY(owner_id) REFERENCES users(uid),
+              FOREIGN KEY (tenant_id) REFERENCES tenants(tenant_id)
             );
 
             CREATE TABLE IF NOT EXISTS versions (
@@ -87,18 +102,13 @@ internal sealed class Database
               FOREIGN KEY(document_id) REFERENCES documents(document_id)
             );
 
-            CREATE TABLE IF NOT EXISTS tenants(
-                tenant_id TEXT PRIMARY KEY,
-                name TEXT NOT NULL
+            CREATE TABLE IF NOT EXISTS metadata(
+                
+                metadata_id TEXT PRIMARY KEY,
+                document_id TEXT NOT NULL,
+                category TEXT,
+                label TEXT,
             );
-
-            CREATE TABLE IF NOT EXISTS users(
-                uid TEXT PRIMARY KEY,
-                tenant_id TEXT NOT NULL,
-                FOREIGN KEY(tenant_id) REFERENCES tenants(tenant_id)
-             );
-             
-            
 
             INSERT OR IGNORE INTO tenants(tenant_id, name) VALUES(0, 'default');
             INSERT OR IGNORE INTO users(uid, tenant_id) VALUES(0, 0);
@@ -108,7 +118,6 @@ internal sealed class Database
             CREATE INDEX IF NOT EXISTS idx_folders_owner_parent ON folders(owner_id, parent_folder_id);
             CREATE INDEX IF NOT EXISTS idx_documents_owner_folder_active ON documents(owner_id, folder_id) WHERE is_deleted = 0;
             CREATE INDEX IF NOT EXISTS idx_versions_document_created ON versions(document_id, created_at_utc DESC);
-
             
             ";
             
