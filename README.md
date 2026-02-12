@@ -3,7 +3,7 @@ An open source implementation of a standard Document Management System (DMS) use
 My focus therefore is on usability, sync features (google drive, nextcloud  ...) and drawing feature for convertibles.
 
 This is mainly a learning project for concepts I learned in university about software development and engineering. 
-If you have expirience with C# development or software design and want to help feel free to open a issue or send me a message to let me know what i can improve. 
+If you have experience with C# development or software design and want to help feel free to open a issue or send me a message to let me know what i can improve. 
 Or if you have input from the user sight like what features you want to see or need for you to use it just make a feature request.
 
 ## Primary features
