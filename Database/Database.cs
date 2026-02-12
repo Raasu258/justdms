@@ -20,8 +20,6 @@ internal sealed class Database
             DataSource = _dbPath,
             Mode = SqliteOpenMode.ReadWriteCreate
         }.ToString();
-
-        
         
     }
 
@@ -88,7 +86,7 @@ internal sealed class Database
               tenant_id INTEGER NOT NULL,
               filetype TEXT NULL,
               is_deleted INTEGER NOT NULL DEFAULT 0,
-              FOREIGN KEY(folder_id) REFERENCES folders(folder_id)
+              FOREIGN KEY(folder_id) REFERENCES folders(folder_id),
               FOREIGN KEY(owner_id) REFERENCES users(uid),
               FOREIGN KEY (tenant_id) REFERENCES tenants(tenant_id)
             );
@@ -108,6 +106,7 @@ internal sealed class Database
                 document_id TEXT NOT NULL,
                 category TEXT,
                 label TEXT,
+                FOREIGN KEY(document_id) REFERENCES documents(document_id)
             );
 
             INSERT OR IGNORE INTO tenants(tenant_id, name) VALUES(0, 'default');

@@ -14,6 +14,8 @@ internal class Program
         string blobStoreDir = Path.Combine(workingDir, "blobstore");
 
         var bootstrap = new Bootstrap();
+        bootstrap.Initialize();
+        
         var config = new AppConfig();
         var dataStore = new BlobStore(blobStoreDir);
         var database = new Database(workingDir);
@@ -26,6 +28,9 @@ internal class Program
 
         using var readBack = dataStore.Get(hash);
         Console.WriteLine(readBack.Length); // sollte nicht crashen
+        
+        using var reader = new StreamReader(readBack);
+        Console.WriteLine(reader.ReadToEnd());
         Console.ReadLine();
         
     }

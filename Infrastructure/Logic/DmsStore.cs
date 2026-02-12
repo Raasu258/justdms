@@ -2,8 +2,6 @@
 
 namespace JustDMS.Infrastructure.Logic;
 
-using System.Collections.Generic;
-using Bootstrap;
 using BlobStore;
 using Database;
 
@@ -40,7 +38,7 @@ internal class DmsStore
         )";
     }
     
-    internal bool ImportFile(Stream content, string fileName, string folderID = "root", int ownerId = 0, int tenantId = 0)
+    internal bool ImportFile(FileStream content, string fileName = "", string folderId = "root", int ownerId = 0, int tenantId = 0)
     {
         try
         {
@@ -55,6 +53,7 @@ internal class DmsStore
                     folder_id,
                     name,
                     owner_id,
+                    tenant_id,
                     filetype             
                 ) VALUES (
                      $documentId,
@@ -62,19 +61,44 @@ internal class DmsStore
                      $fileName,
                      $owner_id,
                      $tenant_id, 
-                     $fileType,   
-                )                                  
+                     $fileType   
+                );         
+
+                INSERT INTO versions (
+                    version_id,
+                    document_id,
+                    blob_hash,
+                    created_at_utc,
+                    base_version_id
+                ) VALUES (
+                    $versionId,
+                    $documentId,
+                    $blobHash,
+                    $createdAt,
+                    0
+                );
             ";
             
-            cmd.Parameters.AddWithValue("$documentId", Guid.NewGuid().ToString("N"));
-            cmd.Parameters.AddWithValue("$folderID", folderID);
-            cmd.Parameters.AddWithValue("$fileName", fileName ?? content.Name);
+            
+            var documentId = Guid.NewGuid().ToString("N");
+            var versionId = Guid.NewGuid().ToString("N");
+            var createdAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+            
+            cmd.Parameters.AddWithValue("$documentId", documentId);
+            cmd.Parameters.AddWithValue("$folderID", folderId);
+            cmd.Parameters.AddWithValue("$fileName", fileName == "" ? Path.GetFileName(content.Name) : fileName);
             cmd.Parameters.AddWithValue("$ownerId", ownerId);
             cmd.Parameters.AddWithValue("$tenantId", tenantId);
             cmd.Parameters.AddWithValue("$fileType", "test");
+            
+            cmd.Parameters.AddWithValue("$versionId", versionId);
+            cmd.Parameters.AddWithValue("$blobHash", hash);
+            cmd.Parameters.AddWithValue("$createdAt", createdAt);
+            
+            cmd.ExecuteNonQuery();
 
         }
-        catch (ArgumentNullException)   // idea for future return of array with error to make a good error message in GUI
+        catch (ArgumentNullException)   // idea for future return of an array with error to make a good error message in GUI
         {
             return false;
         }
@@ -87,15 +111,16 @@ internal class DmsStore
             return false;
         }
         
-
-        return false;
+        return true;
     }
     internal bool ExportFile(string fileName, string path)
     {
         
+        
+        return false;
     }
     
-    internal bool CreateFolder(string folderName, string parentFolderID = "root", int ownerId = 0, int tenantId = 0)
+    internal bool CreateFolder(string folderName, string parentFolderId = "root", int ownerId = 0, int tenantId = 0)
     {
         try
         {
@@ -111,7 +136,7 @@ internal class DmsStore
           tenant_id
         )
         VALUES (
-          $folderId, // offen
+          $folderId, 
           $parentFolderID,
           $folderName,
           $ownerId,
@@ -121,7 +146,7 @@ internal class DmsStore
         ";
 
             cmd.Parameters.AddWithValue("$folderId", Guid.NewGuid().ToString("N"));
-            cmd.Parameters.AddWithValue("$parentFolderID", parentFolderID);
+            cmd.Parameters.AddWithValue("$parentFolderID", parentFolderId);
             cmd.Parameters.AddWithValue("$folderName", folderName);
             cmd.Parameters.AddWithValue("$ownerId", ownerId);
             cmd.Parameters.AddWithValue("$tenantId", tenantId);
@@ -133,21 +158,22 @@ internal class DmsStore
             return false;
         }
 
+        return true;
     }
     
     internal bool ExportFolder(string folderName, string path)
     {
-        
+        return false;
     }
     
     internal bool DeleteFolder(string folderName)
     {
-        
+        return false;
     }
     
     internal bool DeleteDocument(string fileName)
     {
-        
+        return false;
     }
     
     internal void ListDocuments()
