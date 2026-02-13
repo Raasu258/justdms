@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using JustDMS.Infrastructure.Helper;
+using Microsoft.Data.Sqlite;
 
 namespace JustDMS.Infrastructure.Logic;
 
@@ -133,7 +134,7 @@ internal class DmsStore
         INSERT INTO folders (
           folder_id,
           parent_folder_id,
-          name,
+          foldername,
           owner_id,
           tenant_id
         )
@@ -182,8 +183,44 @@ internal class DmsStore
     {
         using SqliteConnection db = _database.OpenConnection();
         using var cmd = db.CreateCommand();
+        
+        cmd.CommandText = @"
 
-        cmd.CommandText = @"";
+        
+        
+        ";
+        
+        var values = new List<Document>();
+        using (var reader = cmd.ExecuteReader()){
+            while (reader.Read())
+            {
+                values.Add(new Document(reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetInt32(3), reader.GetInt32(4), reader.GetString(5)));
+            }
+        
+        
+        }
+    }
+
+    internal void ListFolders()
+    {
+        using SqliteConnection db = _database.OpenConnection();
+        using var cmd = db.CreateCommand();
+        
+        cmd.CommandText = @"
+            
+        
+        
+        ";
+
+        var values = new List<Folder>();
+        
+        using (var reader = cmd.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                values.Add(new Folder(reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetInt32(3), reader.GetInt32(4)));
+            }
+        }
     }
     
     internal void GetOpenPath()
