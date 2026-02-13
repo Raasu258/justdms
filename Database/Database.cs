@@ -70,7 +70,7 @@ internal sealed class Database
             CREATE TABLE IF NOT EXISTS folders (
               folder_id TEXT PRIMARY KEY,
               parent_folder_id TEXT NULL,
-              name TEXT NOT NULL,
+              foldername TEXT NOT NULL,
               owner_id INTEGER NOT NULL,
               tenant_id INTEGER NOT NULL,
               FOREIGN KEY(parent_folder_id) REFERENCES folders(folder_id),
@@ -81,7 +81,7 @@ internal sealed class Database
             CREATE TABLE IF NOT EXISTS documents (
               document_id TEXT PRIMARY KEY,
               folder_id TEXT NOT NULL,
-              name TEXT NOT NULL,
+              docname TEXT NOT NULL,
               owner_id INTEGER NOT NULL,
               tenant_id INTEGER NOT NULL,
               filetype TEXT NULL,

@@ -25,7 +25,7 @@ internal class DmsStore
         INSERT OR IGNORE INTO folders (
           folder_id,
           parent_folder_id,
-          name,
+          foldername,
           owner_id,
           tenant_id
         )
@@ -36,6 +36,8 @@ internal class DmsStore
           0,
           0
         )";
+        
+        cmd.ExecuteNonQuery();
     }
     
     internal bool ImportFile(FileStream content, string fileName = "", string folderId = "root", int ownerId = 0, int tenantId = 0)
@@ -51,7 +53,7 @@ internal class DmsStore
                 INSERT INTO documents (
                     document_id,
                     folder_id,
-                    name,
+                    docname,
                     owner_id,
                     tenant_id,
                     filetype             

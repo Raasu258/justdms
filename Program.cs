@@ -19,10 +19,26 @@ internal class Program
         var config = new AppConfig();
         var dataStore = new BlobStore(blobStoreDir);
         var database = new Database(workingDir);
-        
-        using var fs = File.OpenRead("C:\\Users\\oelar\\Pictures\\test.txt");
-        string hash = dataStore.Put(fs);
 
+        var baseDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        string filePath = "";
+        
+        if(OperatingSystem.IsWindows()){
+            
+            filePath = Path.Combine(baseDir, "Pictures", "test.txt");
+            
+        }else if(OperatingSystem.IsLinux()){
+            
+            filePath = Path.Combine(baseDir, "Pictures", "test.txt");
+            
+        }
+        else
+        {
+            throw new PlatformNotSupportedException();
+        }
+        
+        using var fs = File.OpenRead(filePath);
+        string hash = dataStore.Put(fs);
         Console.WriteLine(hash);
         Console.WriteLine(dataStore.Exists(hash));
 

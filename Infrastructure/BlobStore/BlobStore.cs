@@ -18,6 +18,9 @@ internal class BlobStore
     internal void InitializeBlobStore()
     {
         Directory.CreateDirectory(_rootDir);
+        string blobstorePath = Path.Combine(_rootDir, "blobstore");
+        Directory.CreateDirectory(blobstorePath);
+        
     }
     
     
