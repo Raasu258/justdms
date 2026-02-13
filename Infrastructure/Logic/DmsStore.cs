@@ -179,7 +179,7 @@ internal class DmsStore
         return false;
     }
     
-    internal void ListDocuments()
+    internal List<Document> ListDocuments()
     {
         using SqliteConnection db = _database.OpenConnection();
         using var cmd = db.CreateCommand();
@@ -197,11 +197,11 @@ internal class DmsStore
                 values.Add(new Document(reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetInt32(3), reader.GetInt32(4), reader.GetString(5)));
             }
         
-        
         }
+        return values;
     }
 
-    internal void ListFolders()
+    internal List<Folder> ListFolders()
     {
         using SqliteConnection db = _database.OpenConnection();
         using var cmd = db.CreateCommand();
@@ -221,6 +221,8 @@ internal class DmsStore
                 values.Add(new Folder(reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetInt32(3), reader.GetInt32(4)));
             }
         }
+
+        return values;
     }
     
     internal void GetOpenPath()
