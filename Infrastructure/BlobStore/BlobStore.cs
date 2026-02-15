@@ -14,7 +14,6 @@ internal class BlobStore
         _rootDir = rootDirectory ?? throw new ArgumentNullException(nameof(rootDirectory));
         
     }
-
     internal void InitializeBlobStore()
     {
         Directory.CreateDirectory(_rootDir);
@@ -22,8 +21,6 @@ internal class BlobStore
         Directory.CreateDirectory(blobstorePath);
         
     }
-    
-    
     internal string Put(Stream content)
     {
         ArgumentNullException.ThrowIfNull(content);;
@@ -70,7 +67,6 @@ internal class BlobStore
         return hash;
         
     }
-
     internal Stream Get(string hash)
     {
         string path = GetBlobPath(hash);
@@ -80,13 +76,24 @@ internal class BlobStore
 
         return File.OpenRead(path);
     }
-
+    internal bool Delete(string hash)
+    {
+        string path = GetBlobPath(hash);
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
     internal bool Exists(string hash)
     {
         string path = GetBlobPath(hash);
         return File.Exists(path);
     }
-    
     private string GetBlobPath(string hash)
     {
         ValidateHash(hash);
@@ -96,7 +103,6 @@ internal class BlobStore
 
         return Path.Combine(_rootDir, p1, p2, hash + ".bin");
     }
-
     private static void ValidateHash(string hash)
     {
         ArgumentNullException.ThrowIfNull(hash);
@@ -111,7 +117,5 @@ internal class BlobStore
 
             if (!isHex) throw new ArgumentException("Invalid hex chars in hash.", nameof(hash));
         }
-        
     }
-    
 }

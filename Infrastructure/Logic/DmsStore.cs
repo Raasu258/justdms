@@ -41,6 +41,8 @@ internal class DmsStore
         cmd.ExecuteNonQuery();
     }
     
+    // Regarding File (Document)
+    
     internal bool ImportFile(FileStream content, string fileName = "", string folderId = "root", int ownerId = 0, int tenantId = 0)
     {
         try
@@ -122,9 +124,123 @@ internal class DmsStore
         
         return false;
     }
+
+    internal bool DeleteDocument(string documentId, string[] versionIds)
+    {
+        if (string.IsNullOrWhiteSpace(documentId)) return false;
+        if (versionIds == null || versionIds.Length == 0) return false;
+
+        try{
+            using var db = _database.OpenConnection();
+            using var tx = db.BeginTransaction();
+            
+            using var select = db.CreateCommand();
+            select.Transaction = tx;
+
+            var inParams = new List<string>(versionIds.Length);
+            for (int i = 0; i < versionIds.Length; i++)
+            {
+                var p = $"$v{i}";
+                inParams.Add(p);
+                select.Parameters.AddWithValue(p, versionIds[i]);
+            }
+            select.Parameters.AddWithValue("$doc", documentId);
+
+            select.CommandText = $@"
+                SELECT version_id, blob_hash
+                FROM versions
+                WHERE document_id = $doc
+                  AND version_id IN ({string.Join(",", inParams)});
+            ";
+
+            var hashes = new List<string>();
+            using (var reader = select.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    hashes.Add(reader.GetString(1));
+                }
+            }
+            
+            if (hashes.Count == 0)
+            {
+                tx.Rollback();
+                return false;
+            }
+            
+            using var del = db.CreateCommand();
+            del.Transaction = tx;
+            
+            del.Parameters.AddWithValue("$doc", documentId);
+            for (int i = 0; i < versionIds.Length; i++)
+                del.Parameters.AddWithValue($"$v{i}", versionIds[i]);
+
+            del.CommandText = $@"
+                DELETE FROM versions
+                WHERE document_id = $doc
+                  AND version_id IN ({string.Join(",", inParams)});
+            ";
+            del.ExecuteNonQuery();
+            
+            using var upd = db.CreateCommand();
+            upd.Transaction = tx;
+            upd.Parameters.AddWithValue("$doc", documentId);
+            upd.CommandText = @"
+                UPDATE documents
+                SET is_deleted = 1
+                WHERE document_id = $doc
+                  AND NOT EXISTS (SELECT 1 FROM versions WHERE document_id = $doc);
+            ";
+            upd.ExecuteNonQuery();
+
+            tx.Commit();
+            
+            foreach (var h in hashes)
+                _blobStore.Delete(h);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
+    }
+    
+    internal List<Document> ListDocuments(string documentId, int ownerId = -1, int tenantId = -1)
+    {
+        using SqliteConnection db = _database.OpenConnection();
+        using var cmd = db.CreateCommand();
+        
+        cmd.CommandText = @"
+            SELECT * FROM documents 
+                     WHERE document_id = $documentId 
+                       AND tenant_id = $tenantId 
+                       AND owner_id = $ownerId 
+                       AND is_deleted = 0;
+            
+        ";
+        
+        cmd.Parameters.AddWithValue("$documentId", documentId);
+        cmd.Parameters.AddWithValue("$ownerId", ownerId);
+        cmd.Parameters.AddWithValue("$tenantId", tenantId);
+        
+        var values = new List<Document>();
+        using (var reader = cmd.ExecuteReader()){
+            while (reader.Read())
+            {
+                values.Add(new Document(reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetInt32(3), reader.GetInt32(4), reader.GetString(5)));
+            }
+        
+        }
+        return values;
+    }
+    
+    // Regarding Folder
     
     internal bool CreateFolder(string folderName, string parentFolderId = "root", int ownerId = 0, int tenantId = 0)
     {
+        if(folderName == "") return false;
+        
         try
         {
             using SqliteConnection db = _database.OpenConnection();
@@ -169,49 +285,57 @@ internal class DmsStore
         return false;
     }
     
-    internal bool DeleteFolder(string folderName)
+    internal bool DeleteFolder(string folderId)
     {
-        return false;
-    }
-    
-    internal bool DeleteDocument(string fileName)
-    {
-        return false;
-    }
-    
-    internal List<Document> ListDocuments()
-    {
-        using SqliteConnection db = _database.OpenConnection();
-        using var cmd = db.CreateCommand();
-        
-        cmd.CommandText = @"
+        if (string.IsNullOrWhiteSpace(folderId)) return false;
 
-        
-        
-        ";
-        
-        var values = new List<Document>();
-        using (var reader = cmd.ExecuteReader()){
-            while (reader.Read())
-            {
-                values.Add(new Document(reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetInt32(3), reader.GetInt32(4), reader.GetString(5)));
-            }
-        
-        }
-        return values;
-    }
+        try
+        {
+            using var db = _database.OpenConnection();
+            using var tx = db.BeginTransaction();
 
-    internal List<Folder> ListFolders()
-    {
-        using SqliteConnection db = _database.OpenConnection();
-        using var cmd = db.CreateCommand();
-        
-        cmd.CommandText = @"
+            using var select = db.CreateCommand();
+            select.Transaction = tx;
             
+            select.CommandText = @"
+                SELECT folder_id
+                FROM folders
+                WHERE folder_id = $folderId;
+            ";
+            
+            select.Parameters.AddWithValue("$folderId", folderId);
+
+            using (var reader = select.ExecuteReader())
+            {
+                
+            }
+            
+            
+            
+        }catch(Exception e)
+        {
+            return false;
+        }
         
+        return true;
+
+    }
+
+    internal List<Folder> ListFolders(int ownerId = -1, int tenantId = -1)
+    {
+        using SqliteConnection db = _database.OpenConnection();
+        using var cmd = db.CreateCommand();
+        
+        cmd.CommandText = @"
+            SELECT * FROM folders 
+                     WHERE tenant_id = $tenantId 
+                       AND owner_id = $ownerId;
         
         ";
-
+        
+        cmd.Parameters.AddWithValue("$ownerId", ownerId);
+        cmd.Parameters.AddWithValue("$tenantId", tenantId);
+ 
         var values = new List<Folder>();
         
         using (var reader = cmd.ExecuteReader())
